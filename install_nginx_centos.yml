@@ -1,0 +1,43 @@
+---
+- hosts: localhost
+  become: true
+  become_method: sudo
+  tasks:
+    - name: adding Ngnix repo  
+      yum: 
+        name: epel-release
+        state: latest
+    
+    - name: Install nginx on the operating system
+      yum: 
+        name: nginx
+        state: present
+      register: nginx_stat
+
+    - name: ensure nginx is installed
+      shell: nginx -v
+      register: nginx_ver
+      when: nginx_stat.changed
+
+    - debug:
+        var: nginx_ver
+      when: nginx_stat.changed
+
+    - name: enabling nginx service on machine
+      shell: |
+       sudo systemctl enable nginx
+      when: nginx_ver.changed
+
+    - name: Starting nginx on machine
+      shell: |
+       sudo systemctl start nginx
+      when: nginx_ver.changed
+
+    - name: ensure nginx up and running
+      shell: |
+       sudo systemctl status nginx
+      when: nginx_ver.changed
+      register: ngnix_status
+  
+    - debug:
+        msg: "{{ ngnix_status }}"
